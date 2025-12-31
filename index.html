@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fangspiel Deluxe Hell</title>
+<title>Fangspiel Deluxe Symbole</title>
 <style>
 body {
   margin:0; font-family:sans-serif; background: linear-gradient(160deg,#f0f8ff,#dbe9f4,#a3c2f2); color:#333; overflow:hidden;
@@ -11,12 +11,12 @@ body {
 canvas { display:block; background: rgba(255,255,255,0.7); margin:0 auto; border-radius:20px; box-shadow: 0 0 30px rgba(0,0,0,0.2);}
 #score { position:absolute; top:10px; left:50%; transform:translateX(-50%); font-size:28px; color: #006400; font-weight:bold; text-shadow: 1px 1px 2px #fff;}
 #difficulty { position:absolute; top:50px; left:50%; transform:translateX(-50%); background: rgba(0,0,0,0.1); padding:5px 15px; border-radius:10px; font-size:16px;}
-#gameOver, #startScreen {
+#startScreen, #gameOver {
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
   background: rgba(255,255,255,0.95); padding:40px; border-radius:20px; text-align:center; box-shadow: 0 0 50px #006400;
   color:#333;
 }
-#gameOver button, #startScreen button { 
+#startScreen button, #gameOver button { 
   padding:12px 25px; font-size:18px; margin-top:20px; cursor:pointer; border:none; border-radius:10px; background:#006400; color:white; font-weight:bold;}
 footer { position:fixed; bottom:0; width:100%; background: rgba(255,255,255,0.7); padding:10px; text-align:center; font-size:14px; color:#333;}
 footer a { color:#006400; text-decoration:none; cursor:pointer;}
@@ -32,9 +32,9 @@ footer a { color:#006400; text-decoration:none; cursor:pointer;}
 <canvas id="gameCanvas" width="600" height="400"></canvas>
 
 <div id="startScreen">
-  <h1>🎯 Fangspiel Deluxe Hell 🎯</h1>
+  <h1>🎯 Fangspiel Deluxe Symbole 🎯</h1>
   <p>Fange die grünen Bälle, vermeide die roten Bomben!</p>
-  <p>Power-Ups (cyan) machen dein Paddle größer.</p>
+  <p>Power-Ups (mit Symbol) zeigen an, ob sie gut ✅ oder schlecht ⚠️ sind.</p>
   <button onclick="startGame()">Spiel starten</button>
 </div>
 
@@ -51,7 +51,7 @@ footer a { color:#006400; text-decoration:none; cursor:pointer;}
 
 <div id="impressum" class="modal">
   <h2>Impressum</h2>
-  <p>Fangspiel Deluxe Hell – erstellt von Kilian 😎</p>
+  <p>Fangspiel Deluxe Symbole – erstellt von Kilian 😎</p>
   <button onclick="closeModal()">Schließen</button>
 </div>
 <div id="datenschutz" class="modal">
@@ -79,10 +79,17 @@ let score = 0, speedMultiplier = 0.3, gameRunning = false;
 
 function spawnCircle() {
   let x = Math.random() * (canvas.width - 20);
-  let type = Math.random()<0.15?'bomb': (Math.random()<0.2?'powerup':'ball');
-  let color = type==='bomb'?'#ff0000': type==='powerup'?'#00ffff':'#00ff00';
+  let typeChance = Math.random();
+  let type, color, symbol;
+  if(typeChance < 0.15){ 
+    type='bomb'; color='#ff0000'; symbol='💣';
+  } else if(typeChance < 0.3){
+    type='powerup'; color='#00ffff'; symbol='✅';
+  } else{
+    type='ball'; color='#00ff00'; symbol=''; // Punkte
+  }
   let radius = type==='powerup'?20:15 + Math.random()*10;
-  circles.push({ x:x, y:20, radius:radius, speed:1+Math.random()*1*speedMultiplier, color:color, type:type });
+  circles.push({ x:x, y:20, radius:radius, speed:1+Math.random()*1*speedMultiplier, color:color, type:type, symbol:symbol });
 }
 
 function drawPlayer() { 
@@ -92,17 +99,23 @@ function drawPlayer() {
   ctx.fillRect(player.x,player.y,player.width,player.height); 
   ctx.shadowBlur = 0;
 }
+
 function drawCircles() { 
   circles.forEach(c=>{
     ctx.fillStyle=c.color;
     ctx.beginPath();
     ctx.arc(c.x,c.y,c.radius,0,Math.PI*2);
-    ctx.shadowColor = '#fff';
-    ctx.shadowBlur = 10;
     ctx.fill();
-    ctx.shadowBlur = 0;
+    if(c.symbol){
+      ctx.font='16px sans-serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillStyle='#000';
+      ctx.fillText(c.symbol,c.x,c.y);
+    }
   });
 }
+
 function drawConfetti() { 
   confetti.forEach((f,i)=>{
     ctx.fillStyle=f.color; 
@@ -111,6 +124,7 @@ function drawConfetti() {
     if(f.life<=0) confetti.splice(i,1); 
   }); 
 }
+
 function createConfetti(x,y){
   for(let i=0;i<25;i++){
     confetti.push({
@@ -181,6 +195,7 @@ let spawnInterval;
 
 function startGame(){
   document.getElementById('startScreen').style.display='none';
+  document.getElementById('gameOver').style.display='none';
   gameRunning=true;
   score=0; speedMultiplier=0.3; player.width=60; player.color='green';
   circles=[]; confetti=[];
@@ -199,7 +214,6 @@ function gameOver(){
 }
 
 function restartGame(){
-  document.getElementById('gameOver').style.display='none';
   startGame();
 }
 
