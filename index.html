@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fangspiel</title>
+<style>
+  body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #222;
+    color: #fff;
+    font-family: sans-serif;
+    overflow: hidden;
+  }
+  canvas {
+    background: #333;
+    display: block;
+  }
+  #score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    color: gold;
+  }
+</style>
+</head>
+<body>
+<div id="score">Punkte: 0</div>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let player = { x: 270, y: 360, width: 60, height: 20, speed: 7 };
+let keys = {};
+let circles = [];
+let score = 0;
+
+function spawnCircle() {
+  let x = Math.random() * (canvas.width - 20);
+  circles.push({ x: x, y: 0, radius: 15, speed: 3 + Math.random() * 2 });
+}
+
+function drawPlayer() {
+  ctx.fillStyle = 'cyan';
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+}
+
+function drawCircles() {
+  ctx.fillStyle = 'orange';
+  circles.forEach(c => {
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function update() {
+  if(keys['ArrowLeft'] && player.x > 0) player.x -= player.speed;
+  if(keys['ArrowRight'] && player.x + player.width < canvas.width) player.x += player.speed;
+
+  circles.forEach((c, i) => {
+    c.y += c.speed;
+    // Check collision
+    if(c.y + c.radius > player.y && c.x > player.x && c.x < player.x + player.width) {
+      score++;
+      document.getElementById('score').innerText = 'Punkte: ' + score;
+      circles.splice(i, 1);
+    } else if(c.y - c.radius > canvas.height) {
+      circles.splice(i, 1);
+    }
+  });
+}
+
+function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawPlayer();
+  drawCircles();
+  update();
+  requestAnimationFrame(gameLoop);
+}
+
+// Event Listener
+document.addEventListener('keydown', (e) => keys[e.key] = true);
+document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+// Spawn Circles every 1 second
+setInterval(spawnCircle, 1000);
+
+gameLoop();
+</script>
+</body>
+</html>
