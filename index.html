@@ -3,21 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fangspiel Glanz</title>
+<title>Fangspiel Deluxe Hell</title>
 <style>
 body {
-  margin:0; font-family:sans-serif; background: linear-gradient(160deg,#0f2027,#203a43,#2c5364); color:#fff; overflow:hidden;
+  margin:0; font-family:sans-serif; background: linear-gradient(160deg,#f0f8ff,#dbe9f4,#a3c2f2); color:#333; overflow:hidden;
 }
-canvas { display:block; background: rgba(0,0,0,0.2); margin:0 auto; border-radius:20px; box-shadow: 0 0 30px rgba(255,255,255,0.2);}
-#score { position:absolute; top:10px; left:50%; transform:translateX(-50%); font-size:28px; color: #ffd700; font-weight:bold; text-shadow: 1px 1px 5px black;}
-#difficulty { position:absolute; top:50px; left:50%; transform:translateX(-50%); background: rgba(0,0,0,0.5); padding:5px 15px; border-radius:10px; font-size:16px;}
-#gameOver { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background: rgba(0,0,0,0.85); padding:40px; border-radius:20px; text-align:center; display:none; box-shadow: 0 0 50px gold;}
-#gameOver button { padding:12px 25px; font-size:18px; margin-top:20px; cursor:pointer; border:none; border-radius:10px; background:gold; color:black; font-weight:bold;}
-footer { position:fixed; bottom:0; width:100%; background: rgba(0,0,0,0.7); padding:10px; text-align:center; font-size:14px;}
-footer a { color:#ffd700; text-decoration:none; cursor:pointer;}
-.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); color:#fff; padding:20px; overflow:auto;}
+canvas { display:block; background: rgba(255,255,255,0.7); margin:0 auto; border-radius:20px; box-shadow: 0 0 30px rgba(0,0,0,0.2);}
+#score { position:absolute; top:10px; left:50%; transform:translateX(-50%); font-size:28px; color: #006400; font-weight:bold; text-shadow: 1px 1px 2px #fff;}
+#difficulty { position:absolute; top:50px; left:50%; transform:translateX(-50%); background: rgba(0,0,0,0.1); padding:5px 15px; border-radius:10px; font-size:16px;}
+#gameOver, #startScreen {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  background: rgba(255,255,255,0.95); padding:40px; border-radius:20px; text-align:center; box-shadow: 0 0 50px #006400;
+  color:#333;
+}
+#gameOver button, #startScreen button { 
+  padding:12px 25px; font-size:18px; margin-top:20px; cursor:pointer; border:none; border-radius:10px; background:#006400; color:white; font-weight:bold;}
+footer { position:fixed; bottom:0; width:100%; background: rgba(255,255,255,0.7); padding:10px; text-align:center; font-size:14px; color:#333;}
+footer a { color:#006400; text-decoration:none; cursor:pointer;}
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); color:#333; padding:20px; overflow:auto;}
 .modal h2 { text-align:center; }
-.modal button { display:block; margin:20px auto; padding:12px 25px; font-size:16px; cursor:pointer; border:none; border-radius:10px; background:gold; color:black; font-weight:bold;}
+.modal button { display:block; margin:20px auto; padding:12px 25px; font-size:16px; cursor:pointer; border:none; border-radius:10px; background:#006400; color:white; font-weight:bold;}
 </style>
 </head>
 <body>
@@ -25,6 +30,13 @@ footer a { color:#ffd700; text-decoration:none; cursor:pointer;}
 <div id="score">Punkte: 0</div>
 <div id="difficulty">Schwierigkeit: <span id="diffLevel">1</span></div>
 <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<div id="startScreen">
+  <h1>🎯 Fangspiel Deluxe Hell 🎯</h1>
+  <p>Fange die grünen Bälle, vermeide die roten Bomben!</p>
+  <p>Power-Ups (cyan) machen dein Paddle größer.</p>
+  <button onclick="startGame()">Spiel starten</button>
+</div>
 
 <div id="gameOver">
   <h1>Game Over!</h1>
@@ -39,7 +51,7 @@ footer a { color:#ffd700; text-decoration:none; cursor:pointer;}
 
 <div id="impressum" class="modal">
   <h2>Impressum</h2>
-  <p>Fangspiel Glanz – erstellt von Kilian 😎</p>
+  <p>Fangspiel Deluxe Hell – erstellt von Kilian 😎</p>
   <button onclick="closeModal()">Schließen</button>
 </div>
 <div id="datenschutz" class="modal">
@@ -49,33 +61,34 @@ footer a { color:#ffd700; text-decoration:none; cursor:pointer;}
 </div>
 
 <audio id="catchSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
+<audio id="bombSound" src="https://freesound.org/data/previews/151/151022_2654110-lq.mp3"></audio>
 <audio id="gameOverSound" src="https://freesound.org/data/previews/331/331912_3248244-lq.mp3"></audio>
+<audio id="powerupSound" src="https://freesound.org/data/previews/403/403201_5121236-lq.mp3"></audio>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const catchSound = document.getElementById('catchSound');
+const bombSound = document.getElementById('bombSound');
 const gameOverSound = document.getElementById('gameOverSound');
+const powerupSound = document.getElementById('powerupSound');
 
-let player = { x:270, y:360, width:60, height:20 };
+let player = { x:270, y:360, width:60, height:20, color:'green' };
 let circles = [], confetti = [];
-let score = 0, speedMultiplier = 0.5, gameRunning = true;
+let score = 0, speedMultiplier = 0.3, gameRunning = false;
 
 function spawnCircle() {
   let x = Math.random() * (canvas.width - 20);
-  circles.push({ 
-    x: x, 
-    y:0, 
-    radius:15 + Math.random()*10, 
-    speed:1 + Math.random()*1 * speedMultiplier, 
-    color:`hsl(${Math.random()*360}, 80%, 60%)` 
-  });
+  let type = Math.random()<0.15?'bomb': (Math.random()<0.2?'powerup':'ball');
+  let color = type==='bomb'?'#ff0000': type==='powerup'?'#00ffff':'#00ff00';
+  let radius = type==='powerup'?20:15 + Math.random()*10;
+  circles.push({ x:x, y:20, radius:radius, speed:1+Math.random()*1*speedMultiplier, color:color, type:type });
 }
 
 function drawPlayer() { 
-  ctx.fillStyle='cyan'; 
-  ctx.shadowColor = 'white';
-  ctx.shadowBlur = 20;
+  ctx.fillStyle=player.color; 
+  ctx.shadowColor = '#fff';
+  ctx.shadowBlur = 15;
   ctx.fillRect(player.x,player.y,player.width,player.height); 
   ctx.shadowBlur = 0;
 }
@@ -84,8 +97,8 @@ function drawCircles() {
     ctx.fillStyle=c.color;
     ctx.beginPath();
     ctx.arc(c.x,c.y,c.radius,0,Math.PI*2);
-    ctx.shadowColor = 'white';
-    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#fff';
+    ctx.shadowBlur = 10;
     ctx.fill();
     ctx.shadowBlur = 0;
   });
@@ -108,17 +121,30 @@ function createConfetti(x,y){
 }
 
 function update() {
+  if(!gameRunning) return;
   circles.forEach((c,i)=>{
     c.y+=c.speed;
     if(c.y+c.radius>player.y && c.x>player.x && c.x<player.x+player.width){
-      score++;
-      document.getElementById('score').innerText='Punkte: '+score;
-      createConfetti(c.x,c.y);
-      catchSound.currentTime=0; catchSound.play();
+      if(c.type==='ball'){ 
+        score++; 
+        createConfetti(c.x,c.y); 
+        catchSound.currentTime=0; catchSound.play(); 
+        if(score%5===0){ speedMultiplier+=0.05; document.getElementById('diffLevel').innerText=(speedMultiplier).toFixed(2); } 
+      }
+      else if(c.type==='bomb'){ 
+        bombSound.currentTime=0; bombSound.play(); 
+        gameOver(); 
+      }
+      else if(c.type==='powerup'){
+        powerupSound.currentTime=0; powerupSound.play();
+        player.width = Math.min(player.width+30,200);
+        player.color = '#00ffff';
+        setTimeout(()=>{player.width=60; player.color='green'},5000);
+      }
       circles.splice(i,1);
-      if(score%5===0){ speedMultiplier+=0.05; document.getElementById('diffLevel').innerText=(speedMultiplier).toFixed(2); }
-    } else if(c.y-c.radius>canvas.height){
-      gameOver();
+    } else if(c.y-c.radius>canvas.height){ 
+      if(c.type==='ball') gameOver(); 
+      else circles.splice(i,1);
     }
   });
 }
@@ -151,23 +177,30 @@ canvas.addEventListener('touchmove', e=>{
   if(player.x<0) player.x=0; if(player.x+player.width>canvas.width) player.x=canvas.width-player.width;
 },{passive:false});
 
-setInterval(spawnCircle,1200);
+let spawnInterval;
 
-function mainLoop(){ handleKeyboard(); gameLoop(); }
-requestAnimationFrame(function loop(){ mainLoop(); requestAnimationFrame(loop); });
+function startGame(){
+  document.getElementById('startScreen').style.display='none';
+  gameRunning=true;
+  score=0; speedMultiplier=0.3; player.width=60; player.color='green';
+  circles=[]; confetti=[];
+  document.getElementById('score').innerText='Punkte: 0';
+  document.getElementById('diffLevel').innerText='1';
+  spawnInterval = setInterval(spawnCircle,1500);
+  requestAnimationFrame(gameLoop);
+}
 
 function gameOver(){
   gameRunning=false;
+  clearInterval(spawnInterval);
   document.getElementById('finalScore').innerText=score;
   document.getElementById('gameOver').style.display='block';
   gameOverSound.currentTime=0; gameOverSound.play();
 }
 
 function restartGame(){
-  circles=[]; confetti=[]; score=0; speedMultiplier=0.5; gameRunning=true;
-  document.getElementById('score').innerText='Punkte: 0';
-  document.getElementById('diffLevel').innerText='0.50';
   document.getElementById('gameOver').style.display='none';
+  startGame();
 }
 
 function showModal(id){ document.getElementById(id).style.display='block'; }
