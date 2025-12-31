@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fangspiel Ultimate</title>
+<title>Fangspiel Glanz</title>
 <style>
 body {
-  margin:0; font-family:sans-serif; background: linear-gradient(160deg,#1e3c72,#2a5298); color:#fff; overflow:hidden;
+  margin:0; font-family:sans-serif; background: linear-gradient(160deg,#0f2027,#203a43,#2c5364); color:#fff; overflow:hidden;
 }
-canvas { display:block; background:#222; margin:0 auto; }
-#score { position:absolute; top:10px; left:50%; transform:translateX(-50%); font-size:24px; color: gold; font-weight:bold; text-shadow:1px 1px 3px black; }
-#gameOver { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.8); padding:30px; border-radius:15px; text-align:center; display:none; }
-#gameOver button { padding:10px 20px; font-size:16px; margin-top:10px; cursor:pointer; }
-footer { position:fixed; bottom:0; width:100%; background: rgba(0,0,0,0.7); padding:10px; text-align:center; font-size:14px; }
-footer a { color:#ffd700; text-decoration:none; cursor:pointer; }
-.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); color:#fff; padding:20px; overflow:auto; }
+canvas { display:block; background: rgba(0,0,0,0.2); margin:0 auto; border-radius:20px; box-shadow: 0 0 30px rgba(255,255,255,0.2);}
+#score { position:absolute; top:10px; left:50%; transform:translateX(-50%); font-size:28px; color: #ffd700; font-weight:bold; text-shadow: 1px 1px 5px black;}
+#difficulty { position:absolute; top:50px; left:50%; transform:translateX(-50%); background: rgba(0,0,0,0.5); padding:5px 15px; border-radius:10px; font-size:16px;}
+#gameOver { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background: rgba(0,0,0,0.85); padding:40px; border-radius:20px; text-align:center; display:none; box-shadow: 0 0 50px gold;}
+#gameOver button { padding:12px 25px; font-size:18px; margin-top:20px; cursor:pointer; border:none; border-radius:10px; background:gold; color:black; font-weight:bold;}
+footer { position:fixed; bottom:0; width:100%; background: rgba(0,0,0,0.7); padding:10px; text-align:center; font-size:14px;}
+footer a { color:#ffd700; text-decoration:none; cursor:pointer;}
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); color:#fff; padding:20px; overflow:auto;}
 .modal h2 { text-align:center; }
-.modal button { display:block; margin:20px auto; padding:10px 20px; font-size:16px; cursor:pointer; }
-#difficulty { position:absolute; top:50px; left:50%; transform:translateX(-50%); background: rgba(0,0,0,0.5); padding:5px 10px; border-radius:5px; }
+.modal button { display:block; margin:20px auto; padding:12px 25px; font-size:16px; cursor:pointer; border:none; border-radius:10px; background:gold; color:black; font-weight:bold;}
 </style>
 </head>
 <body>
@@ -39,7 +39,7 @@ footer a { color:#ffd700; text-decoration:none; cursor:pointer; }
 
 <div id="impressum" class="modal">
   <h2>Impressum</h2>
-  <p>Fangspiel Ultimate – erstellt von Kilian 😎</p>
+  <p>Fangspiel Glanz – erstellt von Kilian 😎</p>
   <button onclick="closeModal()">Schließen</button>
 </div>
 <div id="datenschutz" class="modal">
@@ -59,17 +59,53 @@ const gameOverSound = document.getElementById('gameOverSound');
 
 let player = { x:270, y:360, width:60, height:20 };
 let circles = [], confetti = [];
-let score = 0, speedMultiplier = 1, gameRunning = true;
+let score = 0, speedMultiplier = 0.5, gameRunning = true;
 
 function spawnCircle() {
   let x = Math.random() * (canvas.width - 20);
-  circles.push({ x: x, y:0, radius:15, speed:2 + Math.random()*2 * speedMultiplier });
+  circles.push({ 
+    x: x, 
+    y:0, 
+    radius:15 + Math.random()*10, 
+    speed:1 + Math.random()*1 * speedMultiplier, 
+    color:`hsl(${Math.random()*360}, 80%, 60%)` 
+  });
 }
 
-function drawPlayer() { ctx.fillStyle='#00ffff'; ctx.fillRect(player.x,player.y,player.width,player.height); }
-function drawCircles() { ctx.fillStyle='#ffa500'; circles.forEach(c=>{ ctx.beginPath(); ctx.arc(c.x,c.y,c.radius,0,Math.PI*2); ctx.fill(); }); }
-function drawConfetti() { confetti.forEach((f,i)=>{ ctx.fillStyle=f.color; ctx.fillRect(f.x,f.y,f.size,f.size); f.y+=f.speed; f.x+=f.dx; f.life--; if(f.life<=0) confetti.splice(i,1); }); }
-function createConfetti(x,y){ for(let i=0;i<20;i++){ confetti.push({x:x,y:y,dx:(Math.random()-0.5)*4,speed:2+Math.random()*3,size:4+Math.random()*4,color:['#ff0','#f0f','#0ff','#f00','#0f0'][Math.floor(Math.random()*5)],life:50+Math.random()*50}); } }
+function drawPlayer() { 
+  ctx.fillStyle='cyan'; 
+  ctx.shadowColor = 'white';
+  ctx.shadowBlur = 20;
+  ctx.fillRect(player.x,player.y,player.width,player.height); 
+  ctx.shadowBlur = 0;
+}
+function drawCircles() { 
+  circles.forEach(c=>{
+    ctx.fillStyle=c.color;
+    ctx.beginPath();
+    ctx.arc(c.x,c.y,c.radius,0,Math.PI*2);
+    ctx.shadowColor = 'white';
+    ctx.shadowBlur = 15;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+}
+function drawConfetti() { 
+  confetti.forEach((f,i)=>{
+    ctx.fillStyle=f.color; 
+    ctx.fillRect(f.x,f.y,f.size,f.size); 
+    f.y+=f.speed; f.x+=f.dx; f.life--; 
+    if(f.life<=0) confetti.splice(i,1); 
+  }); 
+}
+function createConfetti(x,y){
+  for(let i=0;i<25;i++){
+    confetti.push({
+      x:x, y:y, dx:(Math.random()-0.5)*4, speed:2+Math.random()*3, 
+      size:4+Math.random()*4, color:`hsl(${Math.random()*360},100%,70%)`, life:60+Math.random()*50
+    });
+  }
+}
 
 function update() {
   circles.forEach((c,i)=>{
@@ -80,7 +116,7 @@ function update() {
       createConfetti(c.x,c.y);
       catchSound.currentTime=0; catchSound.play();
       circles.splice(i,1);
-      if(score%5===0){ speedMultiplier+=0.1; document.getElementById('diffLevel').innerText=Math.floor(speedMultiplier*10)/10; }
+      if(score%5===0){ speedMultiplier+=0.05; document.getElementById('diffLevel').innerText=(speedMultiplier).toFixed(2); }
     } else if(c.y-c.radius>canvas.height){
       gameOver();
     }
@@ -115,7 +151,7 @@ canvas.addEventListener('touchmove', e=>{
   if(player.x<0) player.x=0; if(player.x+player.width>canvas.width) player.x=canvas.width-player.width;
 },{passive:false});
 
-setInterval(spawnCircle,1000);
+setInterval(spawnCircle,1200);
 
 function mainLoop(){ handleKeyboard(); gameLoop(); }
 requestAnimationFrame(function loop(){ mainLoop(); requestAnimationFrame(loop); });
@@ -128,9 +164,9 @@ function gameOver(){
 }
 
 function restartGame(){
-  circles=[]; confetti=[]; score=0; speedMultiplier=1; gameRunning=true;
+  circles=[]; confetti=[]; score=0; speedMultiplier=0.5; gameRunning=true;
   document.getElementById('score').innerText='Punkte: 0';
-  document.getElementById('diffLevel').innerText='1';
+  document.getElementById('diffLevel').innerText='0.50';
   document.getElementById('gameOver').style.display='none';
 }
 
